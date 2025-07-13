@@ -44,21 +44,25 @@ const loadRealCameras = async () => {
       setLoading(true);
       setError("");
       
-      // Check if we have camera permission first
+      // Enhanced permission checking
       if (cameraPermission === 'denied') {
-        throw new Error('Camera permission denied');
+        throw new Error('Camera permission denied - user declined access');
+      }
+      
+      if (cameraPermission === null) {
+        throw new Error('Camera permission not yet requested');
       }
       
       // Verify camera availability before attempting to access
       const isAvailable = await cameraService.checkCameraAvailability();
       if (!isAvailable) {
-        throw new Error('No cameras available');
+        throw new Error('No cameras available on this device');
       }
       
       const devices = await cameraService.getRealCameras();
       
       if (!devices || devices.length === 0) {
-        throw new Error('No camera devices found');
+        throw new Error('No camera devices found or accessible');
       }
       
       setRealCameras(devices);
@@ -68,27 +72,55 @@ const loadRealCameras = async () => {
     } catch (err) {
       console.error('Real camera loading error:', err);
       
-      // Set appropriate error message based on error type
+      // Enhanced error classification and messaging
       let errorMessage = "Failed to access camera devices";
+      let shouldShowRetry = true;
+      
       if (permissionError?.name === 'NotAllowedError') {
-        errorMessage = "Camera permission denied. Please enable camera access and try again.";
+        errorMessage = "Camera access blocked by browser settings";
+        shouldShowRetry = false;
       } else if (permissionError?.name === 'NotFoundError') {
-        errorMessage = "No camera devices found. Please connect a camera.";
+        errorMessage = "No camera hardware detected on this device";
+        shouldShowRetry = false;
       } else if (permissionError?.name === 'NotReadableError') {
-        errorMessage = "Camera is in use by another application.";
-      } else if (err.message.includes('permission')) {
-        errorMessage = "Camera permission required. Please enable camera access.";
+        errorMessage = "Camera is currently being used by another application";
+        shouldShowRetry = true;
+      } else if (permissionError?.name === 'OverconstrainedError') {
+        errorMessage = "Camera doesn't support required video quality settings";
+        shouldShowRetry = true;
+      } else if (err.message.includes('permission denied')) {
+        errorMessage = "Camera permission denied - please allow camera access";
+        shouldShowRetry = false;
+      } else if (err.message.includes('not yet requested')) {
+        errorMessage = "Please enable camera access first";
+        shouldShowRetry = false;
       }
       
       setError(errorMessage);
-      toast.error(`${errorMessage} Using demo mode.`);
       
-      // Fallback to mock data
+      // Provide specific guidance based on error type
+      if (permissionError?.name === 'NotAllowedError') {
+        toast.error(
+          "Camera blocked: Click the camera icon in your browser's address bar to allow access",
+          { autoClose: 8000 }
+        );
+      } else if (permissionError?.name === 'NotReadableError') {
+        toast.warning(
+          "Camera busy: Close other camera apps and try again",
+          { autoClose: 5000 }
+        );
+      } else {
+        toast.error(`${errorMessage}. Switching to demo mode.`);
+      }
+      
+      // Graceful fallback to mock data with better error handling
       try {
+        toast.info("Loading demo cameras for preview...");
         await loadCameras();
       } catch (fallbackErr) {
-        setError("Failed to load camera feeds");
-        toast.error("Failed to load demo cameras");
+        console.error('Demo camera fallback failed:', fallbackErr);
+        setError("Failed to load camera feeds - please refresh the page");
+        toast.error("Critical error: Unable to load demo cameras");
       }
     } finally {
       setLoading(false);

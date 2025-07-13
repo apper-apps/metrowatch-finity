@@ -20,8 +20,8 @@ const [cameraPermission, setCameraPermission] = useState(null);
     { value: "large", label: "Large View" }
   ];
 
-  const handleCameraToggle = async () => {
-if (!useRealCamera) {
+const handleCameraToggle = async () => {
+    if (!useRealCamera) {
       try {
         setPermissionError(null);
         
@@ -30,7 +30,7 @@ if (!useRealCamera) {
           throw new Error('Camera API not supported in this browser');
         }
 
-        // Request camera permission with constraints
+        // Request camera permission with advanced constraints first
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: { 
             width: { ideal: 1280 }, 
@@ -48,6 +48,9 @@ if (!useRealCamera) {
         // Stop the test stream immediately
         stream.getTracks().forEach(track => track.stop());
         
+        // Save permission status to localStorage for persistence
+        localStorage.setItem('cameraPermission', 'granted');
+        
         setCameraPermission('granted');
         setUseRealCamera(true);
         toast.success("Camera access granted. Initializing real-time detection...");
@@ -55,18 +58,38 @@ if (!useRealCamera) {
       } catch (error) {
         setCameraPermission('denied');
         setPermissionError(error);
+        localStorage.setItem('cameraPermission', 'denied');
         
-        // Handle different types of errors
+        // Handle different types of errors with specific guidance
         if (error.name === 'NotAllowedError') {
-          toast.error("Camera access denied. Please click the camera icon in your browser's address bar and allow camera access, then try again.");
+          toast.error(
+            "Camera access denied. Please:\n" +
+            "1. Click the camera icon in your browser's address bar\n" +
+            "2. Allow camera access\n" +
+            "3. Refresh the page and try again",
+            { autoClose: 8000 }
+          );
         } else if (error.name === 'NotFoundError') {
-          toast.error("No camera found. Please connect a camera and try again.");
+          toast.error(
+            "No camera detected. Please:\n" +
+            "1. Connect a camera device\n" +
+            "2. Check camera drivers are installed\n" +
+            "3. Try again after connecting camera",
+            { autoClose: 6000 }
+          );
         } else if (error.name === 'NotReadableError') {
-          toast.error("Camera is being used by another application. Please close other camera applications and try again.");
+          toast.error(
+            "Camera is busy. Please:\n" +
+            "1. Close other camera applications\n" +
+            "2. Close other browser tabs using camera\n" +
+            "3. Try again in a few seconds",
+            { autoClose: 6000 }
+          );
         } else if (error.name === 'OverconstrainedError') {
-          toast.error("Camera doesn't support the required resolution. Trying with default settings...");
+          toast.warning("Advanced camera settings not supported. Trying basic settings...");
           // Retry with basic constraints
-          handleCameraToggleBasic();
+          setTimeout(() => handleCameraToggleBasic(), 1000);
+          return;
         } else {
           toast.error(`Camera error: ${error.message || 'Please check your camera settings and try again.'}`);
         }
@@ -74,13 +97,20 @@ if (!useRealCamera) {
         console.error("Camera permission error:", {
           name: error.name,
           message: error.message,
-          constraint: error.constraint
+          constraint: error.constraint,
+          timestamp: new Date().toISOString()
         });
+        
+        // Offer demo mode as fallback
+        setTimeout(() => {
+          toast.info("Using demo mode. Click 'Enable Camera' again when ready to use real camera.");
+        }, 2000);
       }
     } else {
       setUseRealCamera(false);
       setCameraPermission(null);
       setPermissionError(null);
+      localStorage.removeItem('cameraPermission');
       toast.info("Switched back to demo mode");
     }
   };

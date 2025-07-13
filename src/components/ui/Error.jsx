@@ -7,36 +7,64 @@ const Error = ({
   onRetry, 
   type = "default" 
 }) => {
-  const getErrorContent = () => {
+const getErrorContent = () => {
     switch (type) {
       case "camera":
-        return {
-          icon: "Camera",
-          title: "Camera Feed Error",
-          description: "Unable to connect to camera feed. Check network connection.",
-        };
+        // Enhanced camera error messaging with permission-specific guidance
+        if (message?.includes('permission') || message?.includes('denied') || message?.includes('blocked')) {
+          return {
+            icon: "CameraOff",
+            title: "Camera Permission Required",
+            description: "Camera access is needed for live monitoring. Please enable camera permissions in your browser settings and refresh the page.",
+            actionText: "How to Enable Camera"
+          };
+        } else if (message?.includes('not found') || message?.includes('detected')) {
+          return {
+            icon: "Camera",
+            title: "No Camera Detected",
+            description: "No camera devices found. Please connect a camera and ensure drivers are installed properly.",
+            actionText: "Check Hardware"
+          };
+        } else if (message?.includes('busy') || message?.includes('use')) {
+          return {
+            icon: "CameraOff",
+            title: "Camera In Use",
+            description: "Camera is being used by another application. Please close other camera apps and try again.",
+            actionText: "Retry Connection"
+          };
+        } else {
+          return {
+            icon: "AlertTriangle",
+            title: "Camera Connection Error",
+            description: message || "Unable to connect to camera feed. Check camera settings and network connection.",
+            actionText: "Retry Connection"
+          };
+        }
       case "network":
         return {
           icon: "Wifi",
           title: "Network Error",
           description: "Lost connection to surveillance system. Attempting to reconnect...",
+          actionText: "Retry Connection"
         };
       case "system":
         return {
           icon: "AlertTriangle",
           title: "System Error",
           description: "Surveillance system is experiencing issues. Please try again.",
+          actionText: "Retry System"
         };
       default:
         return {
           icon: "AlertCircle",
           title: "Error",
-          description: message,
+          description: message || "An unexpected error occurred. Please try again.",
+          actionText: "Retry"
         };
     }
   };
 
-  const { icon, title, description } = getErrorContent();
+const { icon, title, description, actionText } = getErrorContent();
 
   return (
     <motion.div
@@ -56,7 +84,7 @@ const Error = ({
       <h3 className="text-lg font-semibold text-text-primary mb-2">{title}</h3>
       <p className="text-text-secondary mb-6 max-w-md">{description}</p>
       
-      {onRetry && (
+{onRetry && (
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -64,7 +92,7 @@ const Error = ({
           className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors"
         >
           <ApperIcon name="RefreshCw" size={16} />
-          Retry Connection
+          {actionText || "Retry Connection"}
         </motion.button>
       )}
     </motion.div>

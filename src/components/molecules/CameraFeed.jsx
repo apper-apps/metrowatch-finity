@@ -42,32 +42,65 @@ const alertLevel = getAlertLevel();
     >
       {/* Video placeholder */}
 <div className="w-full h-full bg-gradient-to-br from-surface to-background flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-xs px-4">
           {useRealCamera && cameraPermission === 'denied' ? (
             <>
-              <ApperIcon name="CameraOff" size={48} className="text-error mx-auto mb-2" />
-              <p className="text-error text-sm font-medium mb-1">Camera Access Denied</p>
-              <p className="text-text-muted text-xs px-4">
-                {permissionError?.name === 'NotAllowedError' 
-                  ? 'Click the camera icon in your browser\'s address bar to enable camera access'
-                  : permissionError?.name === 'NotFoundError'
-                  ? 'No camera detected. Please connect a camera device.'
-                  : permissionError?.name === 'NotReadableError'
-                  ? 'Camera is being used by another application'
-                  : 'Please check camera settings and refresh the page'
-                }
-              </p>
+              <ApperIcon name="CameraOff" size={48} className="text-error mx-auto mb-3" />
+              <p className="text-error text-sm font-semibold mb-2">Camera Access Blocked</p>
+              <div className="text-text-muted text-xs space-y-1">
+                {permissionError?.name === 'NotAllowedError' ? (
+                  <>
+                    <p className="font-medium">To enable camera:</p>
+                    <p>1. Click 🔒 or 📷 in address bar</p>
+                    <p>2. Select "Allow" for camera</p>
+                    <p>3. Refresh page & try again</p>
+                  </>
+                ) : permissionError?.name === 'NotFoundError' ? (
+                  <>
+                    <p className="font-medium">No camera detected:</p>
+                    <p>• Connect a camera device</p>
+                    <p>• Check USB connections</p>
+                    <p>• Install camera drivers</p>
+                  </>
+                ) : permissionError?.name === 'NotReadableError' ? (
+                  <>
+                    <p className="font-medium">Camera is busy:</p>
+                    <p>• Close other camera apps</p>
+                    <p>• Close camera tabs</p>
+                    <p>• Wait and try again</p>
+                  </>
+                ) : permissionError?.name === 'OverconstrainedError' ? (
+                  <>
+                    <p className="font-medium">Camera settings issue:</p>
+                    <p>• Trying basic quality...</p>
+                    <p>• Please wait</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium">Camera error:</p>
+                    <p>Check settings & refresh page</p>
+                  </>
+                )}
+              </div>
             </>
           ) : useRealCamera && cameraPermission === null ? (
             <>
-              <ApperIcon name="Camera" size={48} className="text-warning mx-auto mb-2" />
-              <p className="text-warning text-sm">Requesting Camera Access...</p>
+              <ApperIcon name="Camera" size={48} className="text-warning mx-auto mb-2 animate-pulse" />
+              <p className="text-warning text-sm font-medium">Requesting Camera Access...</p>
+              <p className="text-text-muted text-xs mt-1">Please allow camera access when prompted</p>
+            </>
+          ) : useRealCamera && cameraPermission === 'granted' ? (
+            <>
+              <ApperIcon name="Camera" size={48} className="text-success mx-auto mb-2 animate-pulse" />
+              <p className="text-success text-sm font-medium">Initializing Live Feed...</p>
+              <p className="text-text-muted text-xs mt-1">Connecting to camera</p>
             </>
           ) : (
             <>
               <ApperIcon name="Camera" size={48} className="text-text-muted mx-auto mb-2" />
-              <p className="text-text-muted text-sm">
-                {useRealCamera ? 'Initializing Live Feed' : 'Demo Feed'}
+              <p className="text-text-muted text-sm font-medium">Demo Feed Active</p>
+              <p className="text-text-muted text-xs mt-1">
+                {camera?.name || 'Security Camera'} - Demo Mode
               </p>
             </>
           )}
