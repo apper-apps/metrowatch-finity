@@ -9,8 +9,11 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
-  "dependencies": {
+"dependencies": {
     "@reduxjs/toolkit": "2.7.0",
+    "@tensorflow-models/coco-ssd": "^2.2.3",
+    "@tensorflow/tfjs": "^4.15.0",
+    "@tensorflow/tfjs-converter": "^4.15.0",
     "apexcharts": "4.7.0",
     "date-fns": "4.1.0",
     "framer-motion": "10.16.4",

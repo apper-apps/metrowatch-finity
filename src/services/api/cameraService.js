@@ -47,5 +47,51 @@ export const cameraService = {
     }
     const deleted = mockCameras.splice(index, 1)[0];
     return { ...deleted };
+  },
+
+  async getRealCameras() {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      
+      if (videoDevices.length === 0) {
+        throw new Error("No camera devices found");
+      }
+
+      const cameras = videoDevices.map((device, index) => ({
+        Id: index + 1,
+        name: device.label || `Camera ${index + 1}`,
+        location: "MacBook Camera",
+        status: "online",
+        feedUrl: `camera://${device.deviceId}`,
+        deviceId: device.deviceId,
+        lastActive: new Date().toISOString(),
+        isRealCamera: true
+      }));
+
+      return cameras;
+    } catch (error) {
+      console.error("Error accessing cameras:", error);
+      throw new Error("Failed to access camera devices");
+    }
+  },
+
+  async getCameraStream(deviceId) {
+    try {
+      const constraints = {
+        video: {
+          deviceId: deviceId ? { exact: deviceId } : undefined,
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30 }
+        }
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      return stream;
+    } catch (error) {
+      console.error("Error getting camera stream:", error);
+      throw new Error("Failed to get camera stream");
+    }
   }
 };
