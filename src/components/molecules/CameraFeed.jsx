@@ -4,7 +4,13 @@ import StatusIndicator from "@/components/molecules/StatusIndicator";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 
-const CameraFeed = ({ camera, size = "medium" }) => {
+const CameraFeed = ({ 
+  camera, 
+  size = "medium", 
+  useRealCamera = false,
+  cameraPermission = null,
+  permissionError = null 
+}) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasAlert, setHasAlert] = useState(camera.status === "alert" || camera.alertLevel > 0);
 
@@ -35,10 +41,36 @@ const alertLevel = getAlertLevel();
       } : {}}
     >
       {/* Video placeholder */}
-      <div className="w-full h-full bg-gradient-to-br from-surface to-background flex items-center justify-center">
+<div className="w-full h-full bg-gradient-to-br from-surface to-background flex items-center justify-center">
         <div className="text-center">
-          <ApperIcon name="Camera" size={48} className="text-text-muted mx-auto mb-2" />
-          <p className="text-text-muted text-sm">Live Feed</p>
+          {useRealCamera && cameraPermission === 'denied' ? (
+            <>
+              <ApperIcon name="CameraOff" size={48} className="text-error mx-auto mb-2" />
+              <p className="text-error text-sm font-medium mb-1">Camera Access Denied</p>
+              <p className="text-text-muted text-xs px-4">
+                {permissionError?.name === 'NotAllowedError' 
+                  ? 'Click the camera icon in your browser\'s address bar to enable camera access'
+                  : permissionError?.name === 'NotFoundError'
+                  ? 'No camera detected. Please connect a camera device.'
+                  : permissionError?.name === 'NotReadableError'
+                  ? 'Camera is being used by another application'
+                  : 'Please check camera settings and refresh the page'
+                }
+              </p>
+            </>
+          ) : useRealCamera && cameraPermission === null ? (
+            <>
+              <ApperIcon name="Camera" size={48} className="text-warning mx-auto mb-2" />
+              <p className="text-warning text-sm">Requesting Camera Access...</p>
+            </>
+          ) : (
+            <>
+              <ApperIcon name="Camera" size={48} className="text-text-muted mx-auto mb-2" />
+              <p className="text-text-muted text-sm">
+                {useRealCamera ? 'Initializing Live Feed' : 'Demo Feed'}
+              </p>
+            </>
+          )}
         </div>
       </div>
 

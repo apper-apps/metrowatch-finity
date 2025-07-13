@@ -6,7 +6,12 @@ import Error from "@/components/ui/Error";
 import { cameraService } from "@/services/api/cameraService";
 import { toast } from "react-toastify";
 
-const CameraGrid = ({ cameraSize = "medium", useRealCamera = false }) => {
+const CameraGrid = ({ 
+  cameraSize = "medium", 
+  useRealCamera = false, 
+  cameraPermission = null,
+  permissionError = null 
+}) => {
   const [cameras, setCameras] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -34,19 +39,57 @@ const CameraGrid = ({ cameraSize = "medium", useRealCamera = false }) => {
     }
   };
 
-  const loadRealCameras = async () => {
+const loadRealCameras = async () => {
     try {
       setLoading(true);
       setError("");
+      
+      // Check if we have camera permission first
+      if (cameraPermission === 'denied') {
+        throw new Error('Camera permission denied');
+      }
+      
+      // Verify camera availability before attempting to access
+      const isAvailable = await cameraService.checkCameraAvailability();
+      if (!isAvailable) {
+        throw new Error('No cameras available');
+      }
+      
       const devices = await cameraService.getRealCameras();
+      
+      if (!devices || devices.length === 0) {
+        throw new Error('No camera devices found');
+      }
+      
       setRealCameras(devices);
       setCameras(devices);
-      toast.success("Real cameras initialized successfully");
+      toast.success(`${devices.length} camera(s) initialized successfully`);
+      
     } catch (err) {
-      setError("Failed to access camera devices");
-      toast.error("Failed to access camera devices. Using mock data.");
+      console.error('Real camera loading error:', err);
+      
+      // Set appropriate error message based on error type
+      let errorMessage = "Failed to access camera devices";
+      if (permissionError?.name === 'NotAllowedError') {
+        errorMessage = "Camera permission denied. Please enable camera access and try again.";
+      } else if (permissionError?.name === 'NotFoundError') {
+        errorMessage = "No camera devices found. Please connect a camera.";
+      } else if (permissionError?.name === 'NotReadableError') {
+        errorMessage = "Camera is in use by another application.";
+      } else if (err.message.includes('permission')) {
+        errorMessage = "Camera permission required. Please enable camera access.";
+      }
+      
+      setError(errorMessage);
+      toast.error(`${errorMessage} Using demo mode.`);
+      
       // Fallback to mock data
-      await loadCameras();
+      try {
+        await loadCameras();
+      } catch (fallbackErr) {
+        setError("Failed to load camera feeds");
+        toast.error("Failed to load demo cameras");
+      }
     } finally {
       setLoading(false);
     }
@@ -86,9 +129,11 @@ const CameraGrid = ({ cameraSize = "medium", useRealCamera = false }) => {
           transition={{ delay: index * 0.1 }}
         >
           <CameraFeed 
-            camera={camera} 
+camera={camera} 
             size={cameraSize} 
             useRealCamera={useRealCamera}
+            cameraPermission={cameraPermission}
+            permissionError={permissionError}
             enableDetection={useRealCamera}
           />
         </motion.div>

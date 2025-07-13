@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import CameraGrid from "@/components/organisms/CameraGrid";
 import AlertPanel from "@/components/organisms/AlertPanel";
@@ -11,7 +11,8 @@ import { toast } from "react-toastify";
 const LiveView = () => {
   const [cameraSize, setCameraSize] = useState("medium");
   const [useRealCamera, setUseRealCamera] = useState(false);
-  const [cameraPermission, setCameraPermission] = useState(null);
+const [cameraPermission, setCameraPermission] = useState(null);
+  const [permissionError, setPermissionError] = useState(null);
 
   const sizeOptions = [
     { value: "small", label: "Small View" },
@@ -20,27 +21,106 @@ const LiveView = () => {
   ];
 
   const handleCameraToggle = async () => {
-    if (!useRealCamera) {
+if (!useRealCamera) {
       try {
-        // Request camera permission
+        setPermissionError(null);
+        
+        // Check if navigator.mediaDevices is available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('Camera API not supported in this browser');
+        }
+
+        // Request camera permission with constraints
         const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { width: 1280, height: 720 } 
+          video: { 
+            width: { ideal: 1280 }, 
+            height: { ideal: 720 },
+            facingMode: 'environment'
+          } 
         });
-        stream.getTracks().forEach(track => track.stop()); // Stop the test stream
+        
+        // Verify we actually got video tracks
+        const videoTracks = stream.getVideoTracks();
+        if (videoTracks.length === 0) {
+          throw new Error('No video tracks available');
+        }
+        
+        // Stop the test stream immediately
+        stream.getTracks().forEach(track => track.stop());
         
         setCameraPermission('granted');
         setUseRealCamera(true);
         toast.success("Camera access granted. Initializing real-time detection...");
+        
       } catch (error) {
         setCameraPermission('denied');
-        toast.error("Camera access denied. Please enable camera permissions.");
-        console.error("Camera permission error:", error);
+        setPermissionError(error);
+        
+        // Handle different types of errors
+        if (error.name === 'NotAllowedError') {
+          toast.error("Camera access denied. Please click the camera icon in your browser's address bar and allow camera access, then try again.");
+        } else if (error.name === 'NotFoundError') {
+          toast.error("No camera found. Please connect a camera and try again.");
+        } else if (error.name === 'NotReadableError') {
+          toast.error("Camera is being used by another application. Please close other camera applications and try again.");
+        } else if (error.name === 'OverconstrainedError') {
+          toast.error("Camera doesn't support the required resolution. Trying with default settings...");
+          // Retry with basic constraints
+          handleCameraToggleBasic();
+        } else {
+          toast.error(`Camera error: ${error.message || 'Please check your camera settings and try again.'}`);
+        }
+        
+        console.error("Camera permission error:", {
+          name: error.name,
+          message: error.message,
+          constraint: error.constraint
+        });
       }
     } else {
       setUseRealCamera(false);
+      setCameraPermission(null);
+      setPermissionError(null);
       toast.info("Switched back to demo mode");
     }
   };
+
+  // Fallback camera toggle with basic constraints
+  const handleCameraToggleBasic = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach(track => track.stop());
+      
+      setCameraPermission('granted');
+      setUseRealCamera(true);
+      toast.success("Camera access granted with basic settings.");
+    } catch (error) {
+      setCameraPermission('denied');
+      setPermissionError(error);
+      toast.error("Unable to access camera with any settings. Using demo mode.");
+    }
+  };
+
+  // Check camera permission on component mount
+  useEffect(() => {
+    const checkCameraPermission = async () => {
+      try {
+        if (navigator.permissions && navigator.permissions.query) {
+          const permission = await navigator.permissions.query({ name: 'camera' });
+          if (permission.state === 'granted') {
+            setCameraPermission('granted');
+          } else if (permission.state === 'denied') {
+            setCameraPermission('denied');
+          }
+        }
+      } catch (error) {
+        // Permission API might not be supported
+        console.log('Permission API not supported');
+      }
+    };
+
+    checkCameraPermission();
+  }, []);
 
   return (
     <motion.div
@@ -82,7 +162,12 @@ const LiveView = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Camera Grid - Takes up 3 columns */}
         <div className="lg:col-span-3">
-          <CameraGrid cameraSize={cameraSize} useRealCamera={useRealCamera} />
+<CameraGrid 
+            cameraSize={cameraSize} 
+            useRealCamera={useRealCamera}
+            cameraPermission={cameraPermission}
+            permissionError={permissionError}
+          />
         </div>
 
         {/* Side Panel - Takes up 1 column */}
