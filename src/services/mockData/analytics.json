@@ -1,0 +1,58 @@
+[
+  {
+    "Id": 1,
+    "date": "2024-01-15",
+    "crowdDensity": 75,
+    "incidentCount": 3,
+    "alertCount": 5,
+    "cameraUptime": 99.2
+  },
+  {
+    "Id": 2,
+    "date": "2024-01-14",
+    "crowdDensity": 82,
+    "incidentCount": 5,
+    "alertCount": 8,
+    "cameraUptime": 98.8
+  },
+  {
+    "Id": 3,
+    "date": "2024-01-13",
+    "crowdDensity": 68,
+    "incidentCount": 2,
+    "alertCount": 3,
+    "cameraUptime": 99.5
+  },
+  {
+    "Id": 4,
+    "date": "2024-01-12",
+    "crowdDensity": 71,
+    "incidentCount": 4,
+    "alertCount": 6,
+    "cameraUptime": 99.1
+  },
+  {
+    "Id": 5,
+    "date": "2024-01-11",
+    "crowdDensity": 89,
+    "incidentCount": 6,
+    "alertCount": 9,
+    "cameraUptime": 98.3
+  },
+  {
+    "Id": 6,
+    "date": "2024-01-10",
+    "crowdDensity": 65,
+    "incidentCount": 1,
+    "alertCount": 2,
+    "cameraUptime": 99.7
+  },
+  {
+    "Id": 7,
+    "date": "2024-01-09",
+    "crowdDensity": 73,
+    "incidentCount": 3,
+    "alertCount": 4,
+    "cameraUptime": 99.4
+  }
+]

@@ -1,0 +1,82 @@
+[
+  {
+    "Id": 1,
+    "type": "suspicious_object",
+    "severity": "high",
+    "cameraId": "CAM-003",
+    "timestamp": "2024-01-15T09:45:23Z",
+    "description": "Unattended bag detected on Platform A",
+    "resolved": false,
+    "snapshotUrl": "/snapshots/incident_001.jpg"
+  },
+  {
+    "Id": 2,
+    "type": "unauthorized_access",
+    "severity": "medium",
+    "cameraId": "CAM-008",
+    "timestamp": "2024-01-15T09:30:12Z",
+    "description": "Person entered restricted emergency corridor",
+    "resolved": true,
+    "snapshotUrl": "/snapshots/incident_002.jpg"
+  },
+  {
+    "Id": 3,
+    "type": "theft",
+    "severity": "critical",
+    "cameraId": "CAM-004",
+    "timestamp": "2024-01-15T08:15:45Z",
+    "description": "Pickpocketing incident near east entrance",
+    "resolved": false,
+    "snapshotUrl": "/snapshots/incident_003.jpg"
+  },
+  {
+    "Id": 4,
+    "type": "crowd_density",
+    "severity": "low",
+    "cameraId": "CAM-001",
+    "timestamp": "2024-01-15T07:45:30Z",
+    "description": "High crowd density detected during rush hour",
+    "resolved": true,
+    "snapshotUrl": "/snapshots/incident_004.jpg"
+  },
+  {
+    "Id": 5,
+    "type": "violence",
+    "severity": "critical",
+    "cameraId": "CAM-002",
+    "timestamp": "2024-01-15T06:20:18Z",
+    "description": "Physical altercation detected on Platform A",
+    "resolved": true,
+    "snapshotUrl": "/snapshots/incident_005.jpg"
+  },
+  {
+    "Id": 6,
+    "type": "suspicious_object",
+    "severity": "medium",
+    "cameraId": "CAM-005",
+    "timestamp": "2024-01-14T22:10:05Z",
+    "description": "Unidentified package near west entrance",
+    "resolved": true,
+    "snapshotUrl": "/snapshots/incident_006.jpg"
+  },
+  {
+    "Id": 7,
+    "type": "unauthorized_access",
+    "severity": "high",
+    "cameraId": "CAM-007",
+    "timestamp": "2024-01-14T20:35:22Z",
+    "description": "Multiple persons in restricted track area",
+    "resolved": false,
+    "snapshotUrl": "/snapshots/incident_007.jpg"
+  },
+  {
+    "Id": 8,
+    "type": "theft",
+    "severity": "medium",
+    "cameraId": "CAM-006",
+    "timestamp": "2024-01-14T18:50:40Z",
+    "description": "Attempted bag snatching on Platform B",
+    "resolved": true,
+    "snapshotUrl": "/snapshots/incident_008.jpg"
+  }
+]

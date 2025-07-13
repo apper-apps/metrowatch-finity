@@ -1,0 +1,66 @@
+[
+  {
+    "Id": 1,
+    "name": "Platform A - North",
+    "location": "Platform A North Exit",
+    "status": "online",
+    "feedUrl": "rtmp://camera1.metro.local/stream",
+    "lastActive": "2024-01-15T10:30:00Z"
+  },
+  {
+    "Id": 2,
+    "name": "Platform A - South",
+    "location": "Platform A South Exit",
+    "status": "online",
+    "feedUrl": "rtmp://camera2.metro.local/stream",
+    "lastActive": "2024-01-15T10:30:00Z"
+  },
+  {
+    "Id": 3,
+    "name": "Concourse - Main",
+    "location": "Main Concourse Area",
+    "status": "alert",
+    "feedUrl": "rtmp://camera3.metro.local/stream",
+    "lastActive": "2024-01-15T10:29:45Z"
+  },
+  {
+    "Id": 4,
+    "name": "Entrance - East",
+    "location": "East Main Entrance",
+    "status": "online",
+    "feedUrl": "rtmp://camera4.metro.local/stream",
+    "lastActive": "2024-01-15T10:30:00Z"
+  },
+  {
+    "Id": 5,
+    "name": "Entrance - West",
+    "location": "West Main Entrance",
+    "status": "online",
+    "feedUrl": "rtmp://camera5.metro.local/stream",
+    "lastActive": "2024-01-15T10:30:00Z"
+  },
+  {
+    "Id": 6,
+    "name": "Platform B - North",
+    "location": "Platform B North Exit",
+    "status": "online",
+    "feedUrl": "rtmp://camera6.metro.local/stream",
+    "lastActive": "2024-01-15T10:30:00Z"
+  },
+  {
+    "Id": 7,
+    "name": "Platform B - South",
+    "location": "Platform B South Exit",
+    "status": "offline",
+    "feedUrl": "rtmp://camera7.metro.local/stream",
+    "lastActive": "2024-01-15T10:15:30Z"
+  },
+  {
+    "Id": 8,
+    "name": "Emergency Exit",
+    "location": "Emergency Exit Corridor",
+    "status": "online",
+    "feedUrl": "rtmp://camera8.metro.local/stream",
+    "lastActive": "2024-01-15T10:30:00Z"
+  }
+]
