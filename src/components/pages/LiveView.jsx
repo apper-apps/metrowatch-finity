@@ -94,10 +94,9 @@ const handleCameraToggle = async () => {
           toast.error(`Camera error: ${error.message || 'Please check your camera settings and try again.'}`);
         }
         
-        console.error("Camera permission error:", {
+console.error("Camera permission error:", {
           name: error.name,
           message: error.message,
-          constraint: error.constraint,
           timestamp: new Date().toISOString()
         });
         
