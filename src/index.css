@@ -114,6 +114,22 @@ body {
 
 .alert-active {
   animation: alert-pulse 2s infinite;
+  border: 2px solid #FF3547;
+}
+
+.alert-critical {
+  border-color: #DC2626;
+  box-shadow: 0 0 25px rgba(220, 38, 38, 0.4);
+}
+
+.alert-high {
+  border-color: #F97316;
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
+}
+
+.alert-medium {
+  border-color: #EAB308;
+  box-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
 }
 
 /* Status indicators */
@@ -163,9 +179,50 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
+/* Small camera grid */
+.camera-grid-small {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.camera-grid-small .video-feed {
+  aspect-ratio: 16/9;
+}
+
+/* Large camera grid */
+.camera-grid-large {
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.camera-grid-large .video-feed {
+  aspect-ratio: 16/9;
+}
+
+/* Camera size variants */
+.camera-small .video-feed {
+  min-height: 150px;
+}
+
+.camera-medium .video-feed {
+  min-height: 200px;
+}
+
+.camera-large .video-feed {
+  min-height: 300px;
+}
+
 @media (min-width: 768px) {
   .camera-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .camera-grid-small {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .camera-grid-large {
+    grid-template-columns: repeat(1, 1fr);
   }
 }
 
@@ -173,11 +230,27 @@ body {
   .camera-grid {
     grid-template-columns: repeat(3, 1fr);
   }
+  
+  .camera-grid-small {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .camera-grid-large {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (min-width: 1536px) {
   .camera-grid {
     grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .camera-grid-small {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  .camera-grid-large {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 

@@ -5,7 +5,7 @@ import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import { cameraService } from "@/services/api/cameraService";
 
-const CameraGrid = () => {
+const CameraGrid = ({ cameraSize = "medium" }) => {
   const [cameras, setCameras] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -13,7 +13,6 @@ const CameraGrid = () => {
   useEffect(() => {
     loadCameras();
   }, []);
-
   const loadCameras = async () => {
     try {
       setLoading(true);
@@ -35,11 +34,23 @@ const CameraGrid = () => {
     return <Error message={error} onRetry={loadCameras} type="camera" />;
   }
 
+const getGridClass = () => {
+    const baseClass = "camera-grid";
+    switch (cameraSize) {
+      case "small":
+        return `${baseClass} camera-grid-small`;
+      case "large":
+        return `${baseClass} camera-grid-large`;
+      default:
+        return baseClass;
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="camera-grid"
+      className={getGridClass()}
     >
       {cameras.map((camera, index) => (
         <motion.div
@@ -47,8 +58,8 @@ const CameraGrid = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: index * 0.1 }}
-        >
-          <CameraFeed camera={camera} />
+>
+          <CameraFeed camera={camera} size={cameraSize} />
         </motion.div>
       ))}
     </motion.div>

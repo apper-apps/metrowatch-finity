@@ -4,19 +4,35 @@ import StatusIndicator from "@/components/molecules/StatusIndicator";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 
-const CameraFeed = ({ camera }) => {
+const CameraFeed = ({ camera, size = "medium" }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [hasAlert, setHasAlert] = useState(camera.status === "alert");
+  const [hasAlert, setHasAlert] = useState(camera.status === "alert" || camera.alertLevel > 0);
 
   const handleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
 
+  const getAlertLevel = () => {
+    if (camera.alertLevel >= 3) return "critical";
+    if (camera.alertLevel >= 2) return "high";
+    if (camera.alertLevel >= 1) return "medium";
+    return "none";
+  };
+
+const alertLevel = getAlertLevel();
+  
   return (
     <motion.div
-      className={`video-feed relative group ${hasAlert ? "alert-active" : ""}`}
-      whileHover={{ scale: 1.02 }}
+      className={`video-feed relative group ${hasAlert ? `alert-active alert-${alertLevel}` : ""} camera-${size}`}
+      whileHover={{ scale: hasAlert ? 1.05 : 1.02 }}
       transition={{ duration: 0.2 }}
+      animate={hasAlert ? { 
+        boxShadow: [
+          "0 0 0 rgba(255, 53, 71, 0)",
+          "0 0 20px rgba(255, 53, 71, 0.3)",
+          "0 0 0 rgba(255, 53, 71, 0)"
+        ]
+      } : {}}
     >
       {/* Video placeholder */}
       <div className="w-full h-full bg-gradient-to-br from-surface to-background flex items-center justify-center">
@@ -50,15 +66,26 @@ const CameraFeed = ({ camera }) => {
         <span className="text-white text-sm font-medium">{camera.name}</span>
       </div>
 
-      {/* Alert indicator */}
+{/* Alert indicator */}
       {hasAlert && (
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="absolute bottom-3 left-3 bg-error text-white px-2 py-1 rounded-md text-xs font-medium"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ 
+            scale: [1, 1.1, 1],
+            opacity: 1
+          }}
+          transition={{
+            scale: { repeat: Infinity, duration: 1.5 },
+            opacity: { duration: 0.3 }
+          }}
+          className={`absolute bottom-3 left-3 text-white px-3 py-1 rounded-md text-xs font-medium shadow-lg ${
+            alertLevel === "critical" ? "bg-red-600" :
+            alertLevel === "high" ? "bg-orange-500" :
+            alertLevel === "medium" ? "bg-yellow-500" : "bg-error"
+          }`}
         >
           <ApperIcon name="AlertTriangle" size={12} className="inline mr-1" />
-          ALERT
+          {alertLevel.toUpperCase()} ALERT
         </motion.div>
       )}
 
