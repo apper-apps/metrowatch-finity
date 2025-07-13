@@ -1,52 +1,206 @@
-import mockIncidents from "@/services/mockData/incidents.json";
-
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
 export const incidentService = {
   async getAll() {
-    await delay(400);
-    return [...mockIncidents];
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+      
+      const params = {
+        fields: [
+          { field: { Name: "Name" } },
+          { field: { Name: "Tags" } },
+          { field: { Name: "type" } },
+          { field: { Name: "severity" } },
+          { field: { Name: "camera_id" } },
+          { field: { Name: "timestamp" } },
+          { field: { Name: "description" } },
+          { field: { Name: "resolved" } },
+          { field: { Name: "snapshot_url" } }
+        ],
+        orderBy: [
+          { fieldName: "timestamp", sorttype: "DESC" }
+        ]
+      };
+      
+      const response = await apperClient.fetchRecords("incident", params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      return response.data || [];
+    } catch (error) {
+      console.error("Error fetching incidents:", error);
+      throw error;
+    }
   },
 
   async getById(id) {
-    await delay(200);
-    const incident = mockIncidents.find(i => i.Id === parseInt(id));
-    if (!incident) {
-      throw new Error("Incident not found");
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+      
+      const params = {
+        fields: [
+          { field: { Name: "Name" } },
+          { field: { Name: "Tags" } },
+          { field: { Name: "type" } },
+          { field: { Name: "severity" } },
+          { field: { Name: "camera_id" } },
+          { field: { Name: "timestamp" } },
+          { field: { Name: "description" } },
+          { field: { Name: "resolved" } },
+          { field: { Name: "snapshot_url" } }
+        ]
+      };
+      
+      const response = await apperClient.getRecordById("incident", parseInt(id), params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching incident with ID ${id}:`, error);
+      throw error;
     }
-    return { ...incident };
   },
 
   async create(incidentData) {
-    await delay(500);
-    const maxId = Math.max(...mockIncidents.map(i => i.Id));
-    const newIncident = {
-      Id: maxId + 1,
-      ...incidentData,
-      timestamp: new Date().toISOString(),
-      resolved: false
-    };
-    mockIncidents.push(newIncident);
-    return { ...newIncident };
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+      
+      // Only include Updateable fields
+      const params = {
+        records: [{
+          Name: incidentData.Name || incidentData.description,
+          Tags: incidentData.Tags || "",
+          type: incidentData.type,
+          severity: incidentData.severity,
+          camera_id: incidentData.camera_id,
+          timestamp: incidentData.timestamp || new Date().toISOString(),
+          description: incidentData.description,
+          resolved: false,
+          snapshot_url: incidentData.snapshot_url || ""
+        }]
+      };
+      
+      const response = await apperClient.createRecord("incident", params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const failedRecords = response.results.filter(result => !result.success);
+        if (failedRecords.length > 0) {
+          console.error(`Failed to create ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+          throw new Error(failedRecords[0].message || "Failed to create incident");
+        }
+        return response.results[0].data;
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error("Error creating incident:", error);
+      throw error;
+    }
   },
 
   async update(id, updates) {
-    await delay(300);
-    const index = mockIncidents.findIndex(i => i.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error("Incident not found");
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+      
+      // Only include Updateable fields plus Id
+      const updateData = {
+        Id: parseInt(id)
+      };
+      
+      if (updates.Name !== undefined) updateData.Name = updates.Name;
+      if (updates.Tags !== undefined) updateData.Tags = updates.Tags;
+      if (updates.type !== undefined) updateData.type = updates.type;
+      if (updates.severity !== undefined) updateData.severity = updates.severity;
+      if (updates.camera_id !== undefined) updateData.camera_id = updates.camera_id;
+      if (updates.timestamp !== undefined) updateData.timestamp = updates.timestamp;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.resolved !== undefined) updateData.resolved = updates.resolved;
+      if (updates.snapshot_url !== undefined) updateData.snapshot_url = updates.snapshot_url;
+      
+      const params = {
+        records: [updateData]
+      };
+      
+      const response = await apperClient.updateRecord("incident", params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const failedRecords = response.results.filter(result => !result.success);
+        if (failedRecords.length > 0) {
+          console.error(`Failed to update ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+          throw new Error(failedRecords[0].message || "Failed to update incident");
+        }
+        return response.results[0].data;
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error("Error updating incident:", error);
+      throw error;
     }
-    mockIncidents[index] = { ...mockIncidents[index], ...updates };
-    return { ...mockIncidents[index] };
   },
 
   async delete(id) {
-    await delay(300);
-    const index = mockIncidents.findIndex(i => i.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error("Incident not found");
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+      
+      const params = {
+        RecordIds: [parseInt(id)]
+      };
+      
+      const response = await apperClient.deleteRecord("incident", params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const failedRecords = response.results.filter(result => !result.success);
+        if (failedRecords.length > 0) {
+          console.error(`Failed to delete ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+          throw new Error(failedRecords[0].message || "Failed to delete incident");
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting incident:", error);
+      throw error;
     }
-    const deleted = mockIncidents.splice(index, 1)[0];
-    return { ...deleted };
   }
 };

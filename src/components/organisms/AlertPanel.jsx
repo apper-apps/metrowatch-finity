@@ -123,7 +123,7 @@ const AlertPanel = () => {
                       />
                     </div>
                     <p className="text-xs text-text-muted">
-                      {format(new Date(alert.createdAt), "HH:mm:ss - MMM dd")}
+{format(new Date(alert.created_at), "HH:mm:ss - MMM dd")}
                     </p>
                   </div>
                   

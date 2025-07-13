@@ -1,17 +1,54 @@
-import mockCameras from '@/services/mockData/cameras.json';
-
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 export const cameraService = {
   async getAll() {
-    await delay(800);
-    return mockCameras.map(camera => ({
-      ...camera,
-      isOnline: Math.random() > 0.15,
-      alertLevel: Math.random() > 0.8 ? Math.floor(Math.random() * 3) + 1 : 0
-    }));
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+      
+      const params = {
+        fields: [
+          { field: { Name: "Name" } },
+          { field: { Name: "Tags" } },
+          { field: { Name: "location" } },
+          { field: { Name: "status" } },
+          { field: { Name: "feed_url" } },
+          { field: { Name: "last_active" } },
+          { field: { Name: "is_online" } },
+          { field: { Name: "alert_level" } },
+          { field: { Name: "device_id" } },
+          { field: { Name: "real_camera" } },
+          { field: { Name: "capabilities" } },
+          { field: { Name: "error" } }
+        ],
+        orderBy: [
+          { fieldName: "Name", sorttype: "ASC" }
+        ]
+      };
+      
+      const response = await apperClient.fetchRecords("camera", params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      const cameras = response.data || [];
+      
+      // Map database fields to component expectations and add dynamic status
+      return cameras.map(camera => ({
+        ...camera,
+        name: camera.Name || camera.name,
+        isOnline: camera.is_online !== undefined ? camera.is_online : Math.random() > 0.15,
+        alertLevel: camera.alert_level || (Math.random() > 0.8 ? Math.floor(Math.random() * 3) + 1 : 0),
+        feedUrl: camera.feed_url,
+        lastActive: camera.last_active
+      }));
+    } catch (error) {
+      console.error("Error fetching cameras:", error);
+      throw error;
+    }
   },
 
   async checkCameraAvailability() {
@@ -150,21 +187,109 @@ export const cameraService = {
     }
 },
 
-  async getById(id) {
-    await delay(300);
-    const cameras = await this.getAll();
-    return cameras.find(camera => camera.id === id);
+async getById(id) {
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+      
+      const params = {
+        fields: [
+          { field: { Name: "Name" } },
+          { field: { Name: "Tags" } },
+          { field: { Name: "location" } },
+          { field: { Name: "status" } },
+          { field: { Name: "feed_url" } },
+          { field: { Name: "last_active" } },
+          { field: { Name: "is_online" } },
+          { field: { Name: "alert_level" } },
+          { field: { Name: "device_id" } },
+          { field: { Name: "real_camera" } },
+          { field: { Name: "capabilities" } },
+          { field: { Name: "error" } }
+        ]
+      };
+      
+      const response = await apperClient.getRecordById("camera", parseInt(id), params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      const camera = response.data;
+      if (camera) {
+        return {
+          ...camera,
+          name: camera.Name || camera.name,
+          isOnline: camera.is_online !== undefined ? camera.is_online : true,
+          alertLevel: camera.alert_level || 0,
+          feedUrl: camera.feed_url,
+          lastActive: camera.last_active
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error(`Error fetching camera with ID ${id}:`, error);
+      throw error;
+    }
   },
 
-  async updateCamera(id, updates) {
-    await delay(500);
-    return {
-      id,
-      ...updates,
-      lastUpdated: new Date().toISOString()
-    };
+async updateCamera(id, updates) {
+    try {
+      const { ApperClient } = window.ApperSDK;
+      const apperClient = new ApperClient({
+        apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+        apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+      });
+      
+      // Only include Updateable fields plus Id
+      const updateData = {
+        Id: parseInt(id)
+      };
+      
+      if (updates.Name !== undefined) updateData.Name = updates.Name;
+      if (updates.Tags !== undefined) updateData.Tags = updates.Tags;
+      if (updates.location !== undefined) updateData.location = updates.location;
+      if (updates.status !== undefined) updateData.status = updates.status;
+      if (updates.feed_url !== undefined) updateData.feed_url = updates.feed_url;
+      if (updates.last_active !== undefined) updateData.last_active = updates.last_active;
+      if (updates.is_online !== undefined) updateData.is_online = updates.is_online;
+      if (updates.alert_level !== undefined) updateData.alert_level = updates.alert_level;
+      if (updates.device_id !== undefined) updateData.device_id = updates.device_id;
+      if (updates.real_camera !== undefined) updateData.real_camera = updates.real_camera;
+      if (updates.capabilities !== undefined) updateData.capabilities = updates.capabilities;
+      if (updates.error !== undefined) updateData.error = updates.error;
+      
+      const params = {
+        records: [updateData]
+      };
+      
+      const response = await apperClient.updateRecord("camera", params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const failedRecords = response.results.filter(result => !result.success);
+        if (failedRecords.length > 0) {
+          console.error(`Failed to update ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+          throw new Error(failedRecords[0].message || "Failed to update camera");
+        }
+        return response.results[0].data;
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error("Error updating camera:", error);
+      throw error;
+    }
   },
-
   async getCameraStream(deviceId) {
     try {
       // Check permission before attempting to get stream

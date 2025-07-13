@@ -201,7 +201,7 @@ const IncidentTable = () => {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-sm text-text-primary">
-                      {incident.cameraId}
+{incident.camera_id}
                     </td>
                     <td className="px-6 py-4 text-sm text-text-secondary">
                       {format(new Date(incident.timestamp), "MMM dd, HH:mm")}

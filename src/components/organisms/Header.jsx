@@ -1,12 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
+import { useSelector } from 'react-redux';
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 import StatusIndicator from "@/components/molecules/StatusIndicator";
+import { AuthContext } from "../../App";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { logout } = useContext(AuthContext);
+  const { user, isAuthenticated } = useSelector((state) => state.user);
 
   const navigation = [
     { name: "Live View", href: "/", icon: "MonitorSpeaker" },
@@ -52,7 +56,7 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* System Status & Controls */}
+{/* System Status & Controls */}
           <div className="hidden md:flex items-center gap-4">
             <div className="flex items-center gap-2 px-3 py-1 bg-background rounded-md">
               <StatusIndicator status="online" size="sm" showLabel={false} />
@@ -63,9 +67,20 @@ const Header = () => {
               <ApperIcon name="Bell" size={16} />
             </Button>
             
-            <Button variant="ghost" size="sm">
-              <ApperIcon name="User" size={16} />
-            </Button>
+            {isAuthenticated && (
+              <>
+                <div className="flex items-center gap-2 px-3 py-1 bg-background rounded-md">
+                  <ApperIcon name="User" size={16} className="text-accent" />
+                  <span className="text-sm text-text-secondary">
+                    {user?.firstName || 'User'}
+                  </span>
+                </div>
+                
+                <Button variant="ghost" size="sm" onClick={logout}>
+                  <ApperIcon name="LogOut" size={16} />
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
