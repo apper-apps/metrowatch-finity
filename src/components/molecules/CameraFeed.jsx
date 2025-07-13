@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import StatusIndicator from "@/components/molecules/StatusIndicator";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
-
+import { cameraService } from "@/services/api/cameraService";
 const CameraFeed = ({ 
   camera, 
   size = "medium", 
@@ -13,7 +13,73 @@ const CameraFeed = ({
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasAlert, setHasAlert] = useState(camera.status === "alert" || camera.alertLevel > 0);
+  const [videoStream, setVideoStream] = useState(null);
+  const [isStreamLoading, setIsStreamLoading] = useState(false);
+  const [streamError, setStreamError] = useState(null);
+  const videoRef = useRef(null);
 
+  // Initialize camera stream when permission is granted and real camera is requested
+  useEffect(() => {
+    let mounted = true;
+    
+    const initializeStream = async () => {
+      if (!useRealCamera || cameraPermission !== 'granted' || !camera?.deviceId) {
+        return;
+      }
+
+      setIsStreamLoading(true);
+      setStreamError(null);
+
+      try {
+        const stream = await cameraService.getCameraStream(camera.deviceId);
+        
+        if (!mounted) {
+          // Component unmounted, cleanup stream
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
+
+        setVideoStream(stream);
+
+        // Assign stream to video element
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            if (videoRef.current && mounted) {
+              videoRef.current.play().catch(error => {
+                console.warn('Auto-play failed:', error);
+              });
+            }
+          };
+        }
+      } catch (error) {
+        console.error('Failed to initialize camera stream:', error);
+        if (mounted) {
+          setStreamError(error);
+        }
+      } finally {
+        if (mounted) {
+          setIsStreamLoading(false);
+        }
+      }
+    };
+
+    initializeStream();
+
+    return () => {
+      mounted = false;
+    };
+  }, [useRealCamera, cameraPermission, camera?.deviceId]);
+
+  // Cleanup stream on unmount or when switching away from real camera
+  useEffect(() => {
+    return () => {
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        setVideoStream(null);
+      }
+    };
+  }, [videoStream]);
   const handleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
@@ -40,72 +106,94 @@ const alertLevel = getAlertLevel();
         ]
       } : {}}
     >
-      {/* Video placeholder */}
-<div className="w-full h-full bg-gradient-to-br from-surface to-background flex items-center justify-center">
-        <div className="text-center max-w-xs px-4">
-          {useRealCamera && cameraPermission === 'denied' ? (
-            <>
-              <ApperIcon name="CameraOff" size={48} className="text-error mx-auto mb-3" />
-              <p className="text-error text-sm font-semibold mb-2">Camera Access Blocked</p>
-              <div className="text-text-muted text-xs space-y-1">
-                {permissionError?.name === 'NotAllowedError' ? (
-                  <>
-                    <p className="font-medium">To enable camera:</p>
-                    <p>1. Click 🔒 or 📷 in address bar</p>
-                    <p>2. Select "Allow" for camera</p>
-                    <p>3. Refresh page & try again</p>
-                  </>
-                ) : permissionError?.name === 'NotFoundError' ? (
-                  <>
-                    <p className="font-medium">No camera detected:</p>
-                    <p>• Connect a camera device</p>
-                    <p>• Check USB connections</p>
-                    <p>• Install camera drivers</p>
-                  </>
-                ) : permissionError?.name === 'NotReadableError' ? (
-                  <>
-                    <p className="font-medium">Camera is busy:</p>
-                    <p>• Close other camera apps</p>
-                    <p>• Close camera tabs</p>
-                    <p>• Wait and try again</p>
-                  </>
-                ) : permissionError?.name === 'OverconstrainedError' ? (
-                  <>
-                    <p className="font-medium">Camera settings issue:</p>
-                    <p>• Trying basic quality...</p>
-                    <p>• Please wait</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="font-medium">Camera error:</p>
-                    <p>Check settings & refresh page</p>
-                  </>
-                )}
-              </div>
-            </>
-          ) : useRealCamera && cameraPermission === null ? (
-            <>
-              <ApperIcon name="Camera" size={48} className="text-warning mx-auto mb-2 animate-pulse" />
-              <p className="text-warning text-sm font-medium">Requesting Camera Access...</p>
-              <p className="text-text-muted text-xs mt-1">Please allow camera access when prompted</p>
-            </>
-          ) : useRealCamera && cameraPermission === 'granted' ? (
-            <>
-              <ApperIcon name="Camera" size={48} className="text-success mx-auto mb-2 animate-pulse" />
-              <p className="text-success text-sm font-medium">Initializing Live Feed...</p>
-              <p className="text-text-muted text-xs mt-1">Connecting to camera</p>
-            </>
-          ) : (
-            <>
-              <ApperIcon name="Camera" size={48} className="text-text-muted mx-auto mb-2" />
-              <p className="text-text-muted text-sm font-medium">Demo Feed Active</p>
-              <p className="text-text-muted text-xs mt-1">
-                {camera?.name || 'Security Camera'} - Demo Mode
-              </p>
-            </>
-          )}
+{/* Video element for real camera stream */}
+      {useRealCamera && videoStream && (
+        <video
+          ref={videoRef}
+          className="w-full h-full object-cover"
+          autoPlay
+          muted
+          playsInline
+        />
+      )}
+
+      {/* Video placeholder when no stream or using demo mode */}
+      {(!useRealCamera || !videoStream) && (
+        <div className="w-full h-full bg-gradient-to-br from-surface to-background flex items-center justify-center">
+          <div className="text-center max-w-xs px-4">
+            {useRealCamera && cameraPermission === 'denied' ? (
+              <>
+                <ApperIcon name="CameraOff" size={48} className="text-error mx-auto mb-3" />
+                <p className="text-error text-sm font-semibold mb-2">Camera Access Blocked</p>
+                <div className="text-text-muted text-xs space-y-1">
+                  {permissionError?.name === 'NotAllowedError' ? (
+                    <>
+                      <p className="font-medium">To enable camera:</p>
+                      <p>1. Click 🔒 or 📷 in address bar</p>
+                      <p>2. Select "Allow" for camera</p>
+                      <p>3. Refresh page & try again</p>
+                    </>
+                  ) : permissionError?.name === 'NotFoundError' ? (
+                    <>
+                      <p className="font-medium">No camera detected:</p>
+                      <p>• Connect a camera device</p>
+                      <p>• Check USB connections</p>
+                      <p>• Install camera drivers</p>
+                    </>
+                  ) : permissionError?.name === 'NotReadableError' ? (
+                    <>
+                      <p className="font-medium">Camera is busy:</p>
+                      <p>• Close other camera apps</p>
+                      <p>• Close camera tabs</p>
+                      <p>• Wait and try again</p>
+                    </>
+                  ) : permissionError?.name === 'OverconstrainedError' ? (
+                    <>
+                      <p className="font-medium">Camera settings issue:</p>
+                      <p>• Trying basic quality...</p>
+                      <p>• Please wait</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-medium">Camera error:</p>
+                      <p>Check settings & refresh page</p>
+                    </>
+                  )}
+                </div>
+              </>
+            ) : useRealCamera && cameraPermission === null ? (
+              <>
+                <ApperIcon name="Camera" size={48} className="text-warning mx-auto mb-2 animate-pulse" />
+                <p className="text-warning text-sm font-medium">Requesting Camera Access...</p>
+                <p className="text-text-muted text-xs mt-1">Please allow camera access when prompted</p>
+              </>
+            ) : useRealCamera && cameraPermission === 'granted' && isStreamLoading ? (
+              <>
+                <ApperIcon name="Camera" size={48} className="text-info mx-auto mb-2 animate-pulse" />
+                <p className="text-info text-sm font-medium">Initializing Live Feed...</p>
+                <p className="text-text-muted text-xs mt-1">Connecting to camera</p>
+              </>
+            ) : useRealCamera && cameraPermission === 'granted' && streamError ? (
+              <>
+                <ApperIcon name="CameraOff" size={48} className="text-error mx-auto mb-3" />
+                <p className="text-error text-sm font-semibold mb-2">Stream Failed</p>
+                <div className="text-text-muted text-xs">
+                  <p className="font-medium">Camera stream error:</p>
+                  <p>{streamError.message}</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <ApperIcon name="Camera" size={48} className="text-text-muted mx-auto mb-2" />
+                <p className="text-text-muted text-sm font-medium">Demo Feed Active</p>
+                <p className="text-text-muted text-xs mt-1">
+                  {camera?.name || 'Security Camera'} - Demo Mode
+                </p>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
